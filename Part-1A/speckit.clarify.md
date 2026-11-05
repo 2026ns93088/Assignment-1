@@ -3,7 +3,22 @@
 **Reviewed**: `spec.md` against `constitution.md`  
 **Scope**: Identify unresolved behavior and edge cases; the approved allocation formula and bounds are not changed.
 
-## Findings
+## Decisions Recorded for Implementation
+
+The following decisions close the review questions and are now part of `speckit.spec.md`:
+
+1. Age and horizon are independent inputs; each is valid when within its own inclusive bound.
+2. Duplicate object keys are rejected with HTTP `422` and `invalid_request`.
+3. Only UTF-8 `application/json` is accepted; unsupported content types/encodings return HTTP `415`. Bodies are limited to `16384` bytes; larger bodies return HTTP `413`. Invalid UTF-8 is malformed JSON and returns the FR-007 HTTP `400` response.
+4. The public route is `POST /allocation`; malformed JSON is `400`, and valid-but-invalid input is `422`. No version prefix is used.
+5. One validation error is returned, selected in a stable order defined in FR-017.
+6. Non-standard JSON constants (`NaN`, `Infinity`, and equivalents) are rejected as malformed JSON.
+7. Half-up rounding remains documented for completeness, although current integer inputs and coefficients make it a no-op.
+8. Determinism means semantic JSON equality; serialization bytes and key order are not a contract. Rule version remains internal and is not exposed.
+
+The recommendations above are adopted as API requirements for this implementation.
+
+## Original Findings (Resolved by the Decisions Above)
 
 ### High priority
 

@@ -64,6 +64,13 @@ As a client or end user, I want the API's rule-based nature and limitations to b
 - **FR-009**: Error message text for `invalid_request` MAY describe the specific validation error, but MUST be non-empty and stable for the same validation failure. Error responses MUST use the shape `{"error":{"code":"invalid_request","message":"<non-empty message>"}}`.
 - **FR-010**: The result MUST be deterministic: identical valid input under the same rule version MUST produce an identical response, without external data, randomness, hidden state, or model inference.
 - **FR-011**: Documentation MUST state the exact formula, input bounds, rounding and clamping behavior, and that results are rule-based estimates, not individualized financial advice or guarantees of return.
+- **FR-012**: The API MUST accept only `Content-Type: application/json`, optionally with `charset=utf-8` (case-insensitive). Missing, unsupported, or non-UTF-8 content types MUST return HTTP `415` with `{"error":{"code":"unsupported_media_type","message":"Content-Type must be application/json with UTF-8 encoding."}}`.
+- **FR-013**: The API MUST accept only an absent `Content-Encoding` or `identity`. Other content encodings MUST return HTTP `415` with `{"error":{"code":"unsupported_media_type","message":"Content-Encoding must be absent or identity."}}`.
+- **FR-014**: The API MUST limit request bodies to `16384` bytes. Larger bodies MUST return HTTP `413` with `{"error":{"code":"request_too_large","message":"Request body must not exceed 16384 bytes."}}`.
+- **FR-015**: JSON with duplicate object keys MUST return HTTP `422` with error code `invalid_request`; the message MUST identify the duplicated key. Non-standard JSON constants such as `NaN` and `Infinity`, invalid UTF-8, and malformed JSON MUST be treated as malformed JSON under FR-007.
+- **FR-016**: Age and horizon MUST be validated independently against their stated bounds; no additional age/horizon relationship is imposed.
+- **FR-017**: When multiple request validation failures exist, the API MUST report one stable error using this order: missing fields in `age`, `horizon_years`, `risk_tolerance` order; then unexpected fields in lexicographic order; then type and range checks in `age`, `horizon_years`, `risk_tolerance` order. Only the first applicable failure is returned.
+- **FR-018**: Determinism means semantic JSON equality, not byte-for-byte serialization equality. Rule versioning is internal; no rule-version field or versioned route is exposed. The route is `POST /allocation`.
 
 ### Key Entities
 
@@ -79,6 +86,10 @@ As a client or end user, I want the API's rule-based nature and limitations to b
 - Empty body, invalid encoding, and malformed JSON are invalid JSON requests and MUST NOT result in a successful allocation.
 - JSON `true` and `false` are invalid for all three fields, despite Python's `bool` subclassing `int`.
 - Unknown request keys MUST be rejected rather than ignored.
+- Duplicate keys anywhere in a JSON object MUST be rejected rather than resolved by occurrence order.
+- A request with an age/horizon combination within both individual ranges is valid, including age `100` with horizon `80`.
+- Missing/unsupported content type, unsupported content encoding, and oversized request bodies MUST use the explicit `415` and `413` contracts in FR-012–FR-014.
+- Validation MUST report a single failure in the stable order defined by FR-017.
 
 ## Assumptions
 
