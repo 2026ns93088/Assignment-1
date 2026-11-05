@@ -19,3 +19,10 @@
 ## Final Human Review
 * **Decision:** ACCEPT
 * **Justification:** The automated harness confirmed the implementation strictly adheres to the mathematical rules and constraints outlined in the specifications.
+
+## Verification Re-run (2026-11-05)
+* **Harness command:** `python .harness/runner.py`, executed from the `Part-1A/` directory.
+* **Outcome:** PASS. Ruff passed; Bandit reported no issues; pytest collected and passed all 54 unit and contract tests (exit code `0`).
+* **Warning:** Pytest reported one `StarletteDeprecationWarning` related to using `httpx` with `starlette.testclient`. This did not fail the run; it is recorded for future dependency maintenance.
+* **Harness reliability repair:** The runner previously depended on being launched from its own `.harness/` directory because it used relative paths and shell commands. It now resolves project paths relative to the runner file and can be invoked from the `Part-1A/` directory.
+* **Scope note:** These checks verify the implementation against the checked-in tests and static-analysis tools. They are not an independent financial suitability assessment.
