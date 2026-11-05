@@ -1,71 +1,51 @@
-# Assignment-1
+# Assignment-1 User Guide
 
-## Asset Allocation API
+This repository contains two independent Python projects. Use Python 3.11+ and install dependencies separately in each part's directory.
 
-A deterministic, stateless HTTP API that returns an equity and fixed-income split as a rule-based estimate. It is not individualized financial advice and does not guarantee returns.
+> Neither project provides individualized financial advice or guarantees returns.
 
-### Allocation rule
+## Part-1A: Asset Allocation API
 
-For integer inputs, the API calculates:
-
-```text
-equities_percent = clamp(
-    100 - age + 4 * (risk_tolerance - 5) + 2 * (horizon_years - 10),
-    0,
-    100,
-)
-fixed_income_percent = 100 - equities_percent
-```
-
-`age` must be from 18 through 100, `horizon_years` from 1 through 80, and `risk_tolerance` from 1 through 10. The current integer formula always yields an integer; the specification's half-up rounding rule therefore does not alter current results. Age and horizon are validated independently; no additional lifespan assumption is applied.
-
-### Run locally
+Deterministic FastAPI service. From the repository root:
 
 ```powershell
+Set-Location .\Part-1A
 python -m pip install -e ".[test]"
 python -m uvicorn asset_allocation.app:app --reload
 ```
 
-The API listens at `http://127.0.0.1:8000`. Interactive API documentation is available at `/docs`.
-
-### Request and response
-
-Send `POST /allocation` with `Content-Type: application/json`:
+Send `POST /allocation` with JSON:
 
 ```json
-{
-  "age": 40,
-  "horizon_years": 10,
-  "risk_tolerance": 5
-}
+{"age": 40, "horizon_years": 10, "risk_tolerance": 5}
 ```
 
-Successful requests return HTTP `200`:
+The response is `{"equities_percent": 60, "fixed_income_percent": 40}`. Equities use `clamp(100 - age + 4*(risk_tolerance - 5) + 2*(horizon_years - 10), 0, 100)`; fixed income is the remainder. Inputs must be integers: age 18–100, horizon 1–80 years, risk 1–10. Invalid requests return JSON errors.
 
-```json
-{
-  "equities_percent": 60,
-  "fixed_income_percent": 40
-}
-```
-
-Only the three documented request keys are accepted. Values must be JSON integers (booleans are rejected), with no coercion or defaults. Duplicate keys, malformed/non-standard JSON, and invalid UTF-8 are rejected. The request body is limited to 16 KiB. Only `application/json` with no charset or UTF-8 charset is accepted; `Content-Encoding` must be absent or `identity`.
-
-Malformed JSON returns HTTP `400`:
-
-```json
-{
-  "error": {
-    "code": "invalid_json",
-    "message": "Request body must be valid JSON."
-  }
-}
-```
-
-Invalid request shape or values return HTTP `422` with `code: "invalid_request"`. Unsupported media type or content encoding returns HTTP `415` with `code: "unsupported_media_type"`. Oversized request bodies return HTTP `413` with `code: "request_too_large"`. Error messages are stable; when multiple validation issues exist, one is reported using the order documented in the feature specification.
-
-### Tests
+Run tests and the Ruff/Bandit/test harness from `Part-1A`:
 
 ```powershell
 python -m pytest
+python .harness/runner.py
 ```
+
+## Part-1B: Financial Persona Extractor
+
+Validates extraction results for age, investment horizon, and risk score. Missing or unsupported fields must be null and request clarification. No live model provider is configured.
+
+From the repository root:
+
+```powershell
+Set-Location .\Part-1B
+python -m pip install -e ".[test]"
+python -m pytest
+python .harness/eval_runner.py
+```
+
+The harness uses fixed mock responses for the 15-case dataset and writes `.harness/harness-log.md`. A mock `PASS` verifies the harness only; it does not demonstrate real-model accuracy. Use a live adapter only after provider and privacy approval:
+
+```powershell
+python .harness/eval_runner.py --adapter module:factory --repeats 5
+```
+
+See each part's README and `speckit.*.md` files for detailed contracts, limitations, and plans. Part-specific tests, evaluation data, and evidence are kept separate.
