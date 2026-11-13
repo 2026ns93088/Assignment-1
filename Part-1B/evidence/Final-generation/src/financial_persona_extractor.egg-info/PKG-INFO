@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: financial-persona-extractor
+Version: 0.1.0
+Summary: AI-assisted extraction of financial persona fields
+Requires-Python: >=3.11
+Provides-Extra: test
+Requires-Dist: pytest<9.0,>=8.0; extra == "test"
